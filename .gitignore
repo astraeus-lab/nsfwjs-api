@@ -1,0 +1,54 @@
+# Compiled class file
+*.class
+
+# Log file
+*.log
+
+# Certificates
+*.pem
+
+# BlueJ files
+*.ctxt
+
+# Runtime data
+pids
+*.pid
+*.seed
+
+# Binaries for programs and plugins
+*.exe
+*.dll
+*.so
+*.dylib
+bin/
+
+# Package Files
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Diagnostic reports (https://nodejs.org/api/report.html)
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# Dotenv environment
+.env
+.env.development.local
+.env.test.local
+.env.production.local
+.env.local
+
+# VS Code files
+.vscode/
+
+# Jerbrains files
+.idea/
+
+# Other
+.npm
+.DS_Store
+.eslintcache
+node_modules

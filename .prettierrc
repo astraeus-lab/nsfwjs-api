@@ -1,0 +1,20 @@
+{
+  "printWidth": 80,
+  "tabWidth": 4,
+  "useTabs": false,
+  "semi": true,
+  "singleQuote": false,
+  "quoteProps": "consistent",
+  "jsxSingleQuote": false,
+  "trailingComma": "none",
+  "bracketSpacing": true,
+  "arrowParens": "always",
+  "rangeStart": 0,
+  "parser": "babel",
+  "requirePragma": false,
+  "insertPragma": false,
+  "proseWrap": "always",
+  "overrides": [],
+  "endOfLine": "auto",
+  "embeddedLanguageFormatting": "auto"
+}
