@@ -3,7 +3,7 @@ import multer from 'multer';
 import { memoryStorage } from 'multer';
 import { Request, Response } from 'express';
 import { Controller, Post } from "simple-ts-express-decorators";
-import { NSFWDetectService } from "service/nsfwjsDetectService";
+import { NSFWDetectService } from "app/service/nsfwjsDetectService";
 
 const upload = multer({storage: memoryStorage()});
 
@@ -24,7 +24,7 @@ export class ImageDetectController {
         return res.json(await this.detecter.detect(req.file.buffer));
     }
 
-    @Post('/batch/content/detect', upload.array('images'))
+    @Post('/batch/content/detect', upload.array('imageList'))
     async batchDetectWithContent(req: Request, res: Response) {
         if (!req.file) {
             return res.status(400).send('missing image list multipart/form-data');
@@ -58,7 +58,7 @@ export class ImageDetectController {
         }
     }
 
-    @Post('/batch/url/detect', upload.array('images'))
+    @Post('/batch/url/detect', upload.array('imageList'))
     async batchDetectWithURL(req: Request, res: Response) {
         const { urlList } = req.body;
         if (!urlList || !Array.isArray(urlList) || !urlList.length) {
