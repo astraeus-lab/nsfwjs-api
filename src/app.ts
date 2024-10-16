@@ -1,4 +1,6 @@
 import 'reflect-metadata';
+
+import cors from 'cors';
 import express from 'express';
 import bodyParser from 'body-parser';
 import compression from 'compression';
@@ -8,6 +10,7 @@ import { ImageDetectController } from "app/controller/ImageDetectController";
 
 const app = express()
 
+app.use(cors());
 app.use(compression());
 app.use(express.json());
 app.use(bodyParser.json());

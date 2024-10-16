@@ -18,7 +18,7 @@ export class ImageDetectController {
     @Post('/single/content/detect', upload.single('image'))
     async singleDetectWithContent(req: Request, res: Response) {
         if (!req.file) {
-            return res.status(400).send('Missing image multipart/form-data');
+            return res.status(400).json('missing image multipart/form-data');
         }
 
         return res.json(await this.detecter.detect(req.file.buffer));
@@ -27,7 +27,7 @@ export class ImageDetectController {
     @Post('/batch/content/detect', upload.array('imageList'))
     async batchDetectWithContent(req: Request, res: Response) {
         if (!req.file) {
-            return res.status(400).send('missing image list multipart/form-data');
+            return res.status(400).json('missing image list multipart/form-data');
         }
 
         const imageBufferList = (req.files as Express.Multer.File[]).map(file => file.buffer);
@@ -40,13 +40,13 @@ export class ImageDetectController {
     async singleDetectWithURL(req: Request, res: Response) {
         const { url } = req.body;
         if (!url) {
-            return res.status(400).send('Missing image url');
+            return res.status(400).json('missing image url');
         }
 
         try {
             const imageResp = await fetch(url);
             if (!imageResp.ok) {
-                throw new Error(`Failed to fetch image from (${url}) status: ${imageResp.status}`);
+                throw new Error(`failed to fetch image from (${url}) status: ${imageResp.status}`);
             }
 
             const imageBuffer = Buffer.from(await imageResp.arrayBuffer());
@@ -54,7 +54,7 @@ export class ImageDetectController {
 
             return res.json(detectRes);
         } catch (error) {
-            return res.status(500).send(`Error fetching image from url: ${(error as Error).message}`);
+            return res.status(500).json(`error fetching image from url: ${(error as Error).message}`);
         }
     }
 
@@ -62,7 +62,7 @@ export class ImageDetectController {
     async batchDetectWithURL(req: Request, res: Response) {
         const { urlList } = req.body;
         if (!urlList || !Array.isArray(urlList) || !urlList.length) {
-            return res.status(400).send('Missing image list url');
+            return res.status(400).json('missing image list url');
         }
 
         try {
@@ -70,7 +70,7 @@ export class ImageDetectController {
                 urlList.map(async (url: string) => {
                     const imageResp = await fetch(url);
                     if (!imageResp.ok) {
-                        throw new Error(`Failed to fetch image from (${url}) status: ${imageResp.status}`);
+                        throw new Error(`failed to fetch image from (${url}) status: ${imageResp.status}`);
                     }
 
                     return Buffer.from(await imageResp.arrayBuffer());
@@ -80,7 +80,7 @@ export class ImageDetectController {
 
             return res.json(detectRes);
         } catch (error) {
-            return res.status(500).send(`Error fetching images from url list: ${(error as Error).message}`);
+            return res.status(500).json(`error fetching images from url list: ${(error as Error).message}`);
         }
     }
 }

@@ -14,7 +14,7 @@ export class NSFWDetectService {
             if (process.env.NSFWJSAPI_ENABLE_REMOTE_MODEL) {
                 this.#model = await nsfwjs.load(process.env.NSFWJSAPI_ENABLE_REMOTE_MODEL);
             } else {
-                this.#model = await nsfwjs.load('file://./model/inception_v3/model.json');
+		this.#model = await nsfwjs.load('file:'+__dirname+'/../model/inception_v3/model.json');
             }
         }
 
