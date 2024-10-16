@@ -1,7 +1,7 @@
 import * as nsfwjs from 'nsfwjs';
 import * as tf from '@tensorflow/tfjs-node';
 
-import { NSFWJS } from "nsfwjs";
+import { NSFWJS } from 'nsfwjs';
 import { Tensor3D } from '@tensorflow/tfjs';
 
 tf.enableProdMode();
@@ -14,7 +14,7 @@ export class NSFWDetectService {
             if (process.env.NSFWJSAPI_ENABLE_REMOTE_MODEL) {
                 this.#model = await nsfwjs.load(process.env.NSFWJSAPI_ENABLE_REMOTE_MODEL);
             } else {
-		this.#model = await nsfwjs.load('file:'+__dirname+'/../model/inception_v3/model.json');
+                this.#model = await nsfwjs.load('file://./src/model/inception_v3/model.json', {size: 299});
             }
         }
 
