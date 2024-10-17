@@ -5,7 +5,7 @@ WORKDIR /app
 COPY . .
 
 RUN apt-get update && \
-    apt-get install -y python3 build-essential libc6-dev tzdata && \
+    apt-get install -y build-essential libc6-dev tzdata && \
     rm -rf /var/lib/apt/lists/* && \
     ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
     echo "Asia/Shanghai" > /etc/timezone && \
