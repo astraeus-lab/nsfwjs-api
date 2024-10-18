@@ -1,15 +1,10 @@
-import multer from 'multer';
-
-import { createHash } from 'crypto';
-import { memoryStorage } from 'multer';
 import { Request, Response } from 'express';
 import { Controller, Post } from 'simple-ts-express-decorators';
 import { NSFWDetectService } from 'app/service/nsfwjsDetectService';
 
-const upload = multer({storage: memoryStorage()});
-
 interface DetectResponse {
     source: string;
+
     res: any;
     err: string;
 }
@@ -22,53 +17,54 @@ export class ImageDetectController {
         this.detector = new NSFWDetectService();
     }
 
-    @Post('/classify/data', upload.array('image'))
+    @Post('/classify/data')
     async batchDetectWithContent(req: Request, res: Response<DetectResponse[]>) {
-        if (!req.files) {
-            return res.status(400).json([{ source: '', res: {}, err: 'missing image multipart/form-data'}]);
+        const source = req.body.source;
+        if (!source || !Array.isArray(source) || source.length === 0) {
+            return res.status(400).json([{ source: '', res: {}, err: 'missing image data in request body' }]);
         }
 
         const allDetectRes: DetectResponse[] = [];
         await Promise.all(
-            (req.files as Express.Multer.File[]).map(async (file) => {
-                const md5Hash = createHash('md5').update(file.buffer).digest('hex');
+            source.map(async (single: {udid: string, data: string}) => {
+                const imageUDID = single.udid || single.data;
                 try {
-                    const detectRes = await this.detector.detect(file.buffer);
-                    allDetectRes.push({ source: md5Hash, res: detectRes, err: '' });
+                    const detectRes = await this.detector.detect(Buffer.from(single.data, 'base64'));
+                    allDetectRes.push({ source: imageUDID, res: detectRes, err: '' });
                 } catch (error) {
-                    allDetectRes.push({ source: md5Hash, res: {}, err: `Error detecting image: ${(error as Error).message}` });
+                    allDetectRes.push({ source: imageUDID, res: {}, err: `error detecting image: ${(error as Error).message}` });
                 }
             })
         );
-
+    
         return res.json(allDetectRes);
     }
 
     @Post('/classify/url')
     async batchDetectWithURL(req: Request, res: Response<DetectResponse[]>) {
-        const { url } = req.body;
-        if (!url || !Array.isArray(url) || !url.length) {
-            return res.status(400).json([{ source: '', res: {}, err: 'Missing image url' }]);
+        const source = req.body.source;
+        if (!source || !Array.isArray(source) || !source.length) {
+            return res.status(400).json([{ source: '', res: {}, err: 'missing image url in request body' }]);
         }
 
         const detectRes: DetectResponse[] = [];
         await Promise.all(
-            url.map(async (single: string) => {
+            source.map(async (single: {udid: string, data: string}) => {
+                const imageUDID = single.udid || single.data;
                 try {
-                    const imageContent = await fetch(single);
+                    const imageContent = await fetch(single.data);
                     if (!imageContent.ok) {
                         detectRes.push({ 
-                            source: single, 
+                            source: imageUDID,
                             res: {}, 
-                            err: `Failed to fetch image from url status: ${imageContent.status}` 
+                            err: `failed to fetch image from url status: ${imageContent.status}` 
                         });
                         return;
                     }
-                    const buffer = Buffer.from(await imageContent.arrayBuffer());
-                    const singleDetectRes = await this.detector.detect(buffer);
-                    detectRes.push({ source: single, res: singleDetectRes, err: '' });
+                    const singleDetectRes = await this.detector.detect(Buffer.from(await imageContent.arrayBuffer()));
+                    detectRes.push({ source: imageUDID, res: singleDetectRes, err: '' });
                 } catch (error) {
-                    detectRes.push({ source: single, res: {}, err: `Error detecting image: ${(error as Error).message}` });
+                    detectRes.push({ source: imageUDID, res: {}, err: `error detecting image: ${(error as Error).message}` });
                 }
             })
         );
