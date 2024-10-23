@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { Controller, Post } from 'simple-ts-express-decorators';
-import { NSFWDetectService } from 'app/service/nsfwjsDetectService';
+import { DetectImageService } from 'app/service/detectImageService';
+import { FormatImageService } from 'app/service/formatImageService';
 
 interface DetectRequest {
     udid?: string;
@@ -16,10 +17,18 @@ interface DetectResponse {
 
 @Controller()
 export class ImageDetectController {
-    detector: NSFWDetectService;
+    detector: DetectImageService;
+    formater: FormatImageService;
+    allowedImageType: Map<string, boolean>;
 
     constructor() {
-        this.detector = new NSFWDetectService();
+        this.detector = new DetectImageService();
+        this.formater = new FormatImageService();
+        this.allowedImageType = new Map([
+            ["gif", true],
+            ["png", true],
+            ["jpeg", true]
+        ]);
     }
 
     @Post('/classify/data')
@@ -34,7 +43,8 @@ export class ImageDetectController {
             source.map(async (single: DetectRequest) => {
                 const imageUDID = single.udid || single.data;
                 try {
-                    const detectRes = await this.detector.detect(Buffer.from(single.data, 'base64'));
+                    const data = await this.#formatImgType(Buffer.from(single.data, 'base64'))
+                    const detectRes = await this.detector.detect(data);
                     allDetectRes.push({ udid: imageUDID, res: detectRes, err: '' });
                 } catch (error) {
                     allDetectRes.push({ udid: imageUDID, res: {}, err: `error detecting image: ${(error as Error).message}` });
@@ -57,16 +67,19 @@ export class ImageDetectController {
             source.map(async (single: DetectRequest) => {
                 const imageUDID = single.udid || single.data;
                 try {
-                    const imageContent = await fetch(single.data);
-                    if (!imageContent.ok) {
+                    const imgContent = await fetch(single.data);
+                    if (!imgContent.ok) {
                         detectRes.push({ 
                             udid: imageUDID,
                             res: {}, 
-                            err: `failed to fetch image from url status: ${imageContent.status}` 
+                            err: `failed to fetch image from url status: ${imgContent.status}` 
                         });
+
                         return;
                     }
-                    const singleDetectRes = await this.detector.detect(Buffer.from(await imageContent.arrayBuffer()));
+
+                    const data = await this.#formatImgType(Buffer.from(await imgContent.arrayBuffer()));
+                    const singleDetectRes = await this.detector.detect(data);
                     detectRes.push({ udid: imageUDID, res: singleDetectRes, err: '' });
                 } catch (error) {
                     detectRes.push({ udid: imageUDID, res: {}, err: `error detecting image: ${(error as Error).message}` });
@@ -75,5 +88,18 @@ export class ImageDetectController {
         );
 
         return res.json(detectRes);
+    }
+
+    async #formatImgType(imgBuffer: Buffer) {
+        const imgType = (await this.formater.getImgFormat(imgBuffer))?.toString();
+        if (this.allowedImageType.get(imgType)) {
+            return imgBuffer;
+        }
+
+        try {
+            return this.formater.imgFromatType(imgBuffer, "jpeg");
+        } catch(error) {
+            throw error
+        }
     }
 }

@@ -1,15 +1,14 @@
 import * as nsfwjs from 'nsfwjs';
 import * as tf from '@tensorflow/tfjs-node';
 
-import { NSFWJS } from 'nsfwjs';
 import { Tensor3D } from '@tensorflow/tfjs';
 
 tf.enableProdMode();
 
-export class NSFWDetectService {
-    #model?: NSFWJS;
+export class DetectImageService {
+    #model?: nsfwjs.NSFWJS;
 
-    async #getModel(): Promise<NSFWJS> {
+    async #getModel(): Promise<nsfwjs.NSFWJS> {
         if (!this.#model) {
             if (process.env.NSFWJSAPI_ENABLE_REMOTE_MODEL) {
                 this.#model = await nsfwjs.load(process.env.NSFWJSAPI_ENABLE_REMOTE_MODEL);
