@@ -4,6 +4,7 @@ import { DetectImageService } from 'app/service/detectImageService';
 import { FormatImageService } from 'app/service/formatImageService';
 
 interface DetectRequest {
+    timeout?: number;
     udid?: string;
     data: string;
 }
@@ -63,13 +64,13 @@ export class ImageDetectController {
         }
 
         const detectRes: DetectResponse[] = [];
-        const timeoutLimit = parseInt(process.env.CLASSIFY_URL_TIMEOUT || '1', 10) * 1000;
         await Promise.all(
             source.map(async (single: DetectRequest) => {
                 const imageUDID = single.udid || single.data;
                 try {
                     const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), timeoutLimit);
+                    const timeoutLimit = single.timeout || parseInt(process.env.CLASSIFY_URL_TIMEOUT || '1', 10);
+                    const timeoutId = setTimeout(() => controller.abort(), timeoutLimit*1000);
                     const imgContent = await fetch(single.data, { signal: controller.signal });
                     clearTimeout(timeoutId);
 
@@ -88,7 +89,7 @@ export class ImageDetectController {
                     detectRes.push({ udid: imageUDID, res: singleDetectRes, err: '' });
                 } catch (error) {
                     const errMsg = (error as Error).name === 'AbortError'
-                    ? `fetch request timed out after ${timeoutLimit / 1000} seconds`
+                    ? `fetch request timed out after specific seconds`
                     : `error detecting image: ${(error as Error).message}`;
 
                     detectRes.push({ udid: imageUDID, res: {}, err: errMsg });
