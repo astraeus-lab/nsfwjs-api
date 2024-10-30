@@ -11,7 +11,7 @@ export class DetectImageService {
     async #getModel(): Promise<nsfwjs.NSFWJS> {
         if (!this.#model) {
             if (process.env.NSFWJSAPI_ENABLE_REMOTE_MODEL) {
-                this.#model = await nsfwjs.load(process.env.NSFWJSAPI_ENABLE_REMOTE_MODEL);
+                this.#model = await nsfwjs.load(process.env.NSFWJSAPI_REMOTE_MODEL_ENDPOINT);
             } else {
                 this.#model = await nsfwjs.load('file://./src/model/inception_v3/model.json', {size: 299});
             }

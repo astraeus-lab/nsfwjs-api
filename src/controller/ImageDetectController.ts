@@ -63,11 +63,16 @@ export class ImageDetectController {
         }
 
         const detectRes: DetectResponse[] = [];
+        const timeoutLimit = parseInt(process.env.CLASSIFY_URL_TIMEOUT || '1', 10) * 1000;
         await Promise.all(
             source.map(async (single: DetectRequest) => {
                 const imageUDID = single.udid || single.data;
                 try {
-                    const imgContent = await fetch(single.data);
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), timeoutLimit);
+                    const imgContent = await fetch(single.data, { signal: controller.signal });
+                    clearTimeout(timeoutId);
+
                     if (!imgContent.ok) {
                         detectRes.push({ 
                             udid: imageUDID,
@@ -82,7 +87,11 @@ export class ImageDetectController {
                     const singleDetectRes = await this.detector.detect(data);
                     detectRes.push({ udid: imageUDID, res: singleDetectRes, err: '' });
                 } catch (error) {
-                    detectRes.push({ udid: imageUDID, res: {}, err: `error detecting image: ${(error as Error).message}` });
+                    const errMsg = (error as Error).name === 'AbortError'
+                    ? `fetch request timed out after ${timeoutLimit / 1000} seconds`
+                    : `error detecting image: ${(error as Error).message}`;
+
+                    detectRes.push({ udid: imageUDID, res: {}, err: errMsg });
                 }
             })
         );
