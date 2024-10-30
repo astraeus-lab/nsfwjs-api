@@ -19,4 +19,4 @@ new ControllersLoader({
     controllers: [ImageDetectController],
 }).load(app);
 
-app.listen(process.env.NSFWJSAPI_PORT || 80);
+app.listen(process.env.NSFWJSAPI_PORT || 3000);
