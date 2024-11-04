@@ -62,17 +62,27 @@ export class ImageDetectController {
         if (!source || !Array.isArray(source) || !source.length) {
             return res.status(400).json([{ udid: '', res: {}, err: 'missing image url in request body' }]);
         }
+        
+        const fetchWithTimeout = async (url: string, timeout: number) => {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), timeout * 1000);
+            try {
+                const response = await fetch(url, { signal: controller.signal });
+                clearTimeout(timeoutId);
+                return response;
+            } catch (error) {
+                clearTimeout(timeoutId);
+                throw error;
+            }
+        };
 
         const detectRes: DetectResponse[] = [];
         await Promise.all(
             source.map(async (single: DetectRequest) => {
                 const imageUDID = single.udid || single.data;
                 try {
-                    const controller = new AbortController();
                     const timeoutLimit = single.timeout || parseInt(process.env.CLASSIFY_URL_TIMEOUT || '1', 10);
-                    const timeoutId = setTimeout(() => controller.abort(), timeoutLimit*1000);
-                    const imgContent = await fetch(single.data, { signal: controller.signal });
-                    clearTimeout(timeoutId);
+                    const imgContent = await fetchWithTimeout(single.data, timeoutLimit);
 
                     if (!imgContent.ok) {
                         detectRes.push({ 
@@ -80,7 +90,6 @@ export class ImageDetectController {
                             res: {}, 
                             err: `failed to fetch image from url status: ${imgContent.status}` 
                         });
-
                         return;
                     }
 
